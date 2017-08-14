@@ -1,0 +1,61 @@
+table.csv: city, nhabitants, language, gbp, continent
+
+------------------------------------------------------------------------
+
+SQL:
+	CREATE TABLE results.csv AS (
+		SELECT * FROM table.csv WHERE continent="EUROPE"
+	)
+
+CAROL:
+	input table.csv | where continent="EUROPE" | output results.csv
+
+------------------------------------------------------------------------
+
+SQL:
+	select city, gbp, gbp/nhabitants as gbpPerHabs
+	from table.csv
+	where nhabitants>1000
+	order by nhabitants city
+
+CAROL:
+	  input table.csv 
+	| where nhabitants>1000
+	| eval gbpPerHabs=gbp/nhabitants
+	| fields - nhabitants language continent
+	| sort nhabitants city
+
+------------------------------------------------------------------------
+
+SQL:
+	select a.city, a.gbp/b.avgGbp as gbpNorm
+	from table.csv
+	join (
+		select continent, avg(gbp) as avgGbp
+		from table.csv
+		group by continent
+	) b 
+	on a.continent=b.continent
+
+CAROL:
+	  input table.csv
+	| join continent [
+		input table.csv | stats continent, avg(gbp) as avgGbp by continent
+	  ]
+	| eval gbpNorm=gbp/avgGbp
+	| fields city gbpNorm
+
+CAROL': (way more difficult to implement)
+	  input table.csv
+	| stats list(city) as cityList, list(gbp) as gbpList, avg(gbp) as avgGbp by continent
+	| listexpand cityList as city, gbpList as gbp
+	| eval gbpNorm=gbp/avgGbp
+	| fields city gbpNorm
+
+
+
+
+
+
+
+
